@@ -31,13 +31,14 @@
 			<DCC_ImageBase>00400000</DCC_ImageBase>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
-			<DCC_DebugInformation>false</DCC_DebugInformation>
+			<DCC_ExeOutput>D:\Program Files\MyTunnel</DCC_ExeOutput>
+			<DCC_DebugDCUs>true</DCC_DebugDCUs>
+			<DCC_Optimize>false</DCC_Optimize>
 			<DCC_DcuOutput>.\dcu</DCC_DcuOutput>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
 			<DCC_GenerateStackFrames>true</DCC_GenerateStackFrames>
 			<DCC_MapFile>3</DCC_MapFile>
-			<DCC_ExeOutput>E:\席恒昌_品茗产品\我材助手\我材发布环境\</DCC_ExeOutput>
 			<DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
 			<DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
 			<DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -46,6 +47,11 @@
 			<DelphiCompile Include="srvany.dpr">
 				<MainSource>MainSource</MainSource>
 			</DelphiCompile>
+			<RcCompile Include="uac.rc">
+				<ContainerId>RC</ContainerId>
+				<ContainerId>RC</ContainerId>
+				<Form>uac.res</Form>
+			</RcCompile>
 			<DCCReference Include="uSrvMain.pas">
 				<Form>Service1</Form>
 				<DesignClass>TService</DesignClass>

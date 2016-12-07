@@ -3,7 +3,7 @@ unit ufmServiceCreator;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, Dialogs, StdCtrls, ShellAPI;
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, Dialogs, StdCtrls, ShellAPI, ExtCtrls;
 
 type
   TfrmSvcCreator = class(TForm)
@@ -25,6 +25,7 @@ type
     rb2: TRadioButton;
     edtEndCmd: TEdit;
     btn2: TButton;
+    rg1: TRadioGroup;
     procedure btn1Click(Sender: TObject);
     procedure btn2Click(Sender: TObject);
     procedure rb1Click(Sender: TObject);
@@ -64,6 +65,8 @@ begin
 end;
 
 procedure TfrmSvcCreator.btn2Click(Sender: TObject);
+var
+  si: TShellExecuteInfo;
 begin
   if edtName.Text = '' then
   begin
@@ -78,7 +81,14 @@ begin
   if rb2.Checked and (edtEndCmd.Text = '') then
     rb1.Checked := True;
   SaveSettings();
-  ShellExecute(Handle, nil, PChar(ParamStr(0)), '/install', nil, SW_SHOW);
+  FillChar(si, SizeOf(si), 0);
+  si.cbSize := SizeOf(si);
+  si.lpParameters := '/install';
+  si.lpFile := PChar(ParamStr(0));
+  si.nShow := SW_SHOW;
+  if ShellExecuteEx(@si) then
+    WaitForSingleObject(si.hProcess, INFINITE);
+  CloseHandle(si.hProcess);
   Close;
 end;
 
@@ -122,6 +132,8 @@ begin
     node := Root.NewNode('stopargument');
     if rb2.Checked then
       node.ValueAsString := edtEndCmd.Text;
+    node := Root.NewNode('behavior');
+    node.ValueAsInteger := rg1.ItemIndex;
     SaveToFile(ReplaceFileExt(ParamStr(0), '.xml'));
   finally
     Free;

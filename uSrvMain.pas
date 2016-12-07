@@ -3,11 +3,14 @@ unit uSrvMain;
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, SvcMgr, Dialogs, uGoLang, Registry;
+  Windows, Messages, SysUtils, Classes, Graphics, Controls, SvcMgr, Dialogs, uGoLang, Registry, WinSvc;
 
 type
   TService1 = class(TService)
     procedure ServiceAfterInstall(Sender: TService);
+    procedure ServiceExecute(Sender: TService);
+    procedure ServicePause(Sender: TService; var Paused: Boolean);
+    procedure ServiceShutdown(Sender: TService);
     procedure ServiceStart(Sender: TService; var Started: Boolean);
     procedure ServiceStop(Sender: TService; var Stopped: Boolean);
   private
@@ -20,6 +23,8 @@ type
     FDesp: string;
     FMainThreadId: Cardinal;
     FProcessHandle: THandle;
+    FnBehavior: Integer;
+    FbRelaunch: Boolean;
     FhStdErrRead, FhStdErrWrite, FhStdOutRead, FhStdOutWrite: THandle;
     function GetServiceController: TServiceController; override;
     procedure ReadFromErrorPipe();
@@ -81,7 +86,11 @@ begin
       bSuccess := ReadFile(FhStdErrRead, buf[0], 4096, n, nil);
       if (not bSuccess) or (n = 0) then
         Break;
-      f.Write(buf[0], n);
+      try
+        f.Seek(0, soEnd);
+        f.Write(buf[0], n);
+      except
+      end;
     until not bSuccess;
   finally
     f.Free;
@@ -106,7 +115,11 @@ begin
       bSuccess := ReadFile(FhStdErrRead, buf[0], 4096, n, nil);
       if (not bSuccess) or (n = 0) then
         Break;
-      f.Write(buf[0], n);
+      try
+        f.Seek(0, soEnd);
+        f.Write(buf[0], n);
+      except
+      end;
     until not bSuccess;
   finally
     f.Free;
@@ -125,9 +138,25 @@ begin
   end;
 end;
 
+procedure TService1.ServiceExecute(Sender: TService);
+begin
+  //
+end;
+
+procedure TService1.ServicePause(Sender: TService; var Paused: Boolean);
+begin
+  FbRelaunch := False;
+end;
+
+procedure TService1.ServiceShutdown(Sender: TService);
+begin
+  FbRelaunch := False;
+end;
+
 procedure TService1.ServiceStart(Sender: TService; var Started: Boolean);
 var
   si: TStartupInfo;
+  hThread: THandle;
   Pi: TProcessInformation;
   sa: SECURITY_ATTRIBUTES;
 begin
@@ -136,6 +165,7 @@ begin
     Started := False;
     Exit;
   end;
+  FbRelaunch := True;
   FillChar(si, SizeOf(si), 0);
   FillChar(Pi, SizeOf(Pi), 0);
   si.cb := SizeOf(si);
@@ -148,29 +178,61 @@ begin
   sa.bInheritHandle := True;
   si.cb := SizeOf(si);
 //create pipes
-  if CreatePipe(FhStdErrRead, FhStdErrWrite, @sa, 0) then
-    si.hStdError := FhStdErrWrite;
-  SetHandleInformation(FhStdErrRead, HANDLE_FLAG_INHERIT, 0);
-  if CreatePipe(FhStdOutRead, FhStdOutWrite, @sa, 0) then
-    si.hStdOutput := FhStdOutWrite;
-  SetHandleInformation(FhStdOutRead, HANDLE_FLAG_INHERIT, 0);
+  if FnBehavior <> 2 then  //3=exit after launching, no need to create pipes.
+  begin
+    if CreatePipe(FhStdErrRead, FhStdErrWrite, @sa, 0) then
+      si.hStdError := FhStdErrWrite;
+    SetHandleInformation(FhStdErrRead, HANDLE_FLAG_INHERIT, 0);
+    if CreatePipe(FhStdOutRead, FhStdOutWrite, @sa, 0) then
+      si.hStdOutput := FhStdOutWrite;
+    SetHandleInformation(FhStdOutRead, HANDLE_FLAG_INHERIT, 0);
+  end;
 
-  go(
+  hThread := mgo(
     procedure()
+    var
+      bLaunched: Boolean;
     begin
-      if CreateProcess(nil, PChar(FExe + ' ' + FCmd), nil, nil, True, 0, nil, nil, si, Pi) then
-      begin
-        FProcessHandle := Pi.hProcess;
-        FMainThreadId := Pi.dwThreadId;
-        CloseHandle(Pi.hThread);
-        WaitForSingleObject(Pi.hProcess, INFINITE);
-        CloseHandle(Pi.hProcess);
-        CloseHandle(FhStdErrWrite);
-        CloseHandle(FhStdOutWrite);
-      end;
+      repeat
+        bLaunched := False;
+        if CreateProcess(nil, PChar(FExe + ' ' + FCmd), nil, nil, True, 0, nil, nil, si, Pi) then
+        begin
+          bLaunched := True;
+          FProcessHandle := Pi.hProcess;
+          FMainThreadId := Pi.dwThreadId;
+          CloseHandle(Pi.hThread);
+          if Self.FnBehavior <> 2 then
+            WaitForSingleObject(Pi.hProcess, INFINITE);
+          CloseHandle(Pi.hProcess);
+        end;
+        case Self.FnBehavior of
+          1:
+            Continue;
+        else
+          begin
+            if Assigned(Self.ServiceThread) then
+              PostThreadMessage(Self.ServiceThread.ThreadID, CM_SERVICE_CONTROL_CODE, SERVICE_CONTROL_STOP, 1);
+            Break;
+          end;
+        end;
+      until not FbRelaunch;
+      CloseHandle(FhStdErrWrite);
+      CloseHandle(FhStdOutWrite);
     end);
-  go(ReadFromErrorPipe);
-  go(ReadFromOutputPipe);
+
+  if FnBehavior <> 2 then
+  begin
+    go(ReadFromErrorPipe);
+    go(ReadFromOutputPipe);
+  end;
+
+  if FnBehavior = 2 then
+  begin
+//    Self.OnExecute := Self.ServiceExecute;
+    WaitForSingleObject(hThread, INFINITE);
+    Started := False;
+  end;
+  CloseHandle(hThread);
 end;
 
 procedure TService1.ServiceStop(Sender: TService; var Stopped: Boolean);
@@ -178,6 +240,7 @@ var
   si: TStartupInfo;
   Pi: TProcessInformation;
 begin
+  FbRelaunch := False;
   FillChar(si, SizeOf(si), 0);
   FillChar(Pi, SizeOf(Pi), 0);
   si.wShowWindow := SW_HIDE;
@@ -187,10 +250,10 @@ begin
       if WaitForSingleObject(Pi.hProcess, 60000) = WAIT_TIMEOUT then
         TerminateProcess(Pi.hProcess, 1);
   end;
-  PostThreadMessage(FMainThreadId, WM_QUIT, 0, 0);
-  if WaitForSingleObject(FProcessHandle, 2000) = WAIT_TIMEOUT then
-    TerminateProcess(FProcessHandle, 1);
-  CloseHandle(FProcessHandle);
+//  PostThreadMessage(FMainThreadId, WM_QUIT, 0, 0);
+//  if WaitForSingleObject(FProcessHandle, 2000) = WAIT_TIMEOUT then
+  TerminateProcess(FProcessHandle, 1);
+  //CloseHandle(FProcessHandle);
   Stopped := True;
 end;
 

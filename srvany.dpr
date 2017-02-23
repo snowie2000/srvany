@@ -33,6 +33,7 @@ begin
         DisplayName := Root.FindNode('name').ValueAsString;
         FExe := Root.FindNode('executable').ValueAsString;
         FCmd := Root.FindNode('startargument').ValueAsString;
+        FDir := Root.FindNode('directory').ValueAsString;
         FSvcStopCmd := Root.FindNode('stopargument').ValueAsString;
         FDesp := Root.FindNode('description').ValueAsString;
         aNode := Root.FindNode('behavior');

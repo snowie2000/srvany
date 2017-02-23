@@ -26,6 +26,8 @@ type
     edtEndCmd: TEdit;
     btn2: TButton;
     rg1: TRadioGroup;
+    lbl4: TLabel;
+    edtDir: TEdit;
     procedure btn1Click(Sender: TObject);
     procedure btn2Click(Sender: TObject);
     procedure rb1Click(Sender: TObject);
@@ -125,6 +127,8 @@ begin
     node.ValueAsString := edtDisp.Text;
     node := Root.NewNode('description');
     node.ValueAsString := edtDesp.Text;
+    node := Root.NewNode('directory');
+    node.ValueAsString := edtDir.Text;
     node := Root.NewNode('executable');
     node.ValueAsString := FFileName;
     node := Root.NewNode('startargument');

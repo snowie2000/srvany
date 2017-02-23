@@ -4,7 +4,7 @@ object frmSvcCreator: TfrmSvcCreator
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
   Caption = 'Service creator'
-  ClientHeight = 438
+  ClientHeight = 469
   ClientWidth = 356
   Color = clBtnFace
   DoubleBuffered = True
@@ -17,7 +17,7 @@ object frmSvcCreator: TfrmSvcCreator
   Position = poScreenCenter
   DesignSize = (
     356
-    438)
+    469)
   PixelsPerInch = 96
   TextHeight = 13
   object grp1: TGroupBox
@@ -75,7 +75,7 @@ object frmSvcCreator: TfrmSvcCreator
     Left = 8
     Top = 126
     Width = 340
-    Height = 81
+    Height = 115
     Caption = 'CommandLine'
     TabOrder = 1
     object lblApp: TLabel
@@ -87,7 +87,7 @@ object frmSvcCreator: TfrmSvcCreator
     end
     object lbl3: TLabel
       Left = 9
-      Top = 47
+      Top = 79
       Width = 55
       Height = 13
       Caption = 'Parameters'
@@ -103,6 +103,13 @@ object frmSvcCreator: TfrmSvcCreator
       ParentShowHint = False
       ShowHint = True
     end
+    object lbl4: TLabel
+      Left = 9
+      Top = 50
+      Width = 44
+      Height = 13
+      Caption = 'Directory'
+    end
     object btn1: TButton
       Left = 83
       Top = 18
@@ -114,15 +121,22 @@ object frmSvcCreator: TfrmSvcCreator
     end
     object edtParam: TEdit
       Left = 83
-      Top = 46
+      Top = 78
       Width = 242
       Height = 21
       TabOrder = 1
     end
+    object edtDir: TEdit
+      Left = 83
+      Top = 46
+      Width = 242
+      Height = 21
+      TabOrder = 2
+    end
   end
   object grp3: TGroupBox
     Left = 8
-    Top = 215
+    Top = 247
     Width = 340
     Height = 81
     Caption = 'Termination'
@@ -159,17 +173,18 @@ object frmSvcCreator: TfrmSvcCreator
   end
   object btn2: TButton
     Left = 144
-    Top = 405
+    Top = 436
     Width = 75
     Height = 25
     Anchors = [akBottom]
     Caption = 'Install'
     TabOrder = 3
     OnClick = btn2Click
+    ExplicitTop = 405
   end
   object rg1: TRadioGroup
     Left = 8
-    Top = 302
+    Top = 334
     Width = 340
     Height = 91
     Caption = 'Behavior'

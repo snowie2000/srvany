@@ -18,6 +18,7 @@ type
   public
     FExe: string;
     FCmd: string;
+    FDir: string;
     FFolder: string;
     FSvcStopCmd: string;
     FDesp: string;
@@ -195,7 +196,7 @@ begin
     begin
       repeat
         bLaunched := False;
-        if CreateProcess(nil, PChar(FExe + ' ' + FCmd), nil, nil, True, 0, nil, nil, si, Pi) then
+        if CreateProcess(nil, PChar(FExe + ' ' + FCmd), nil, nil, True, 0, nil, PChar(FDir), si, Pi) then
         begin
           bLaunched := True;
           FProcessHandle := Pi.hProcess;

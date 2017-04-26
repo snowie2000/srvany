@@ -62,6 +62,7 @@ begin
       lblExe.Caption := FileName;
       lblExe.Hint := FileName;
       FFileName := FileName;
+      edtDir.Text := ExtractFileDir(FileName);
     end;
   end;
 end;
@@ -69,12 +70,28 @@ end;
 procedure TfrmSvcCreator.btn2Click(Sender: TObject);
 var
   si: TShellExecuteInfo;
+  s: string;
+  I: Integer;
 begin
+  s := Trim(edtName.Text);
+  edtName.Text := s;
   if edtName.Text = '' then
   begin
     Application.MessageBox('Input service name.', 'srvany', MB_OK or MB_ICONWARNING);
     Exit;
   end;
+  if not ((s[1] in ['a'..'z']) or (s[1] in ['A'..'Z'])) then
+  begin
+    Application.MessageBox('Service name must start with alphabet.', 'srvany', MB_OK or MB_ICONWARNING);
+    Exit;
+  end;
+  for I := 1 to Length(s) do
+    if not (Ord(s[I]) in [33..127]) then
+    begin
+      Application.MessageBox('Service name contains invalid characters.', 'srvany', MB_OK or MB_ICONWARNING);
+      Exit;
+    end;
+
   if FFileName = '' then
   begin
     Application.MessageBox('Select a file to serve.', 'srvany', MB_OK or MB_ICONWARNING);
@@ -145,5 +162,4 @@ begin
 end;
 
 end.
-
 

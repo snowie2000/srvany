@@ -180,7 +180,6 @@ object frmSvcCreator: TfrmSvcCreator
     Caption = 'Install'
     TabOrder = 3
     OnClick = btn2Click
-    ExplicitTop = 405
   end
   object rg1: TRadioGroup
     Left = 8
